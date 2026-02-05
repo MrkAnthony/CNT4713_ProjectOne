@@ -1,0 +1,22 @@
+# IDE
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual Environment
+venv/
+ftp_venv/
+.env/
+ENV/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Downloaded test files
+*.tmp
