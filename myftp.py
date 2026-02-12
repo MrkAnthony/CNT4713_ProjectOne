@@ -35,24 +35,86 @@ def quitFTP(clientSocket) -> None:
 
 # Adrian
 def modePASV(clientSocket):
-    command = "PASV" + "\r\n"
-    # Complete
-    status = 0
-    if data.startswith(""):
-        status = 227
-    # Complete
+
+    # Send PASV
+    response = sendCommand(clientSocket, "PASV")
+    print(response)
+
+    # Check
+    if not response.startswith("227"):
+        return 0, None
+
+    # Extract numbers inside ()
+    start = response.find("(") + 1
+    end = response.find(")")
+    numbers = response[start:end]
+
+    parts = numbers.split(",")
+
+    # Build IP
+    ip = parts[0] + "." + parts[1] + "." + parts[2] + "." + parts[3]
+
+    # Build port
+    port = int(parts[4]) * 256 + int(parts[5])
+
+    # Open data socket
+    dataSocket = socket(AF_INET, SOCK_STREAM)
     dataSocket.connect((ip, port))
-    return status, dataSocket
+
+    return 227, dataSocket
 
 
 # Adrian
 def ftp_list(clientSocket):
-    pass
+    # Enter passive mode
+    status, dataSocket = modePASV(clientSocket)
+
+    if status != 227:
+        print("Failure")
+        return
+
+    # Send LIST command
+    response = sendCommand(clientSocket, "LIST")
+    print(response)
+
+    # Receive directory data
+    data = b""
+    while True:
+        chunk = dataSocket.recv(1024)
+        if not chunk:
+            break
+        data += chunk
+
+    # Close data socket
+    dataSocket.close()
+
+    # Print directory listing
+    print(data.decode())
+
+    # Final server response
+    final_response = receiveData(clientSocket)
+    print(final_response)
+
+    if final_response.startswith("226"):
+        print("Success")
+    else:
+        print("Failure")
+
+
 
 
 # Adrian
 def ftp_cd(clientSocket, directory):
-    pass
+
+    response = sendCommand(clientSocket, "CWD " + directory)
+    print(response)
+
+    if response.startswith("250"):
+        print("Success")
+    else:
+        print("Failure")
+
+
 
 
 # Milan
