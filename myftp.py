@@ -119,17 +119,98 @@ def ftp_cd(clientSocket, directory):
 
 # Milan
 def ftp_get(clientSocket, filename):
-    pass
+    status, dataSocket = modePASV(clientSocket)
+    if status != 227:
+        print("Failure")
+        return
+
+    resp = sendCommand(clientSocket, "RETR " + filename)
+    print(resp)
+    if not (resp.startswith("150") or resp.startswith("125")):
+        dataSocket.close()
+        print("Failure")
+        return
+
+    total = 0
+    try:
+        with open(filename, "wb") as f:
+            while True:
+                chunk = dataSocket.recv(4096)
+                if not chunk:
+                    break
+                f.write(chunk)
+                total += len(chunk)
+    except Exception:
+        dataSocket.close()
+        print("Failure")
+        return
+
+    dataSocket.close()
+    final_resp = receiveData(clientSocket)
+    print(final_resp)
+
+    print("Success" if (final_resp.startswith("226") or final_resp.startswith("250")) else "Failure")
+    print(f"Bytes transferred: {total}")
+
 
 
 # Milan
 def ftp_put(clientSocket, filename):
-    pass
+    try:
+        f = open(filename, "rb")
+    except Exception:
+        print("Failure")
+        return
+
+    status, dataSocket = modePASV(clientSocket)
+    if status != 227:
+        f.close()
+        print("Failure")
+        return
+
+    resp = sendCommand(clientSocket, "STOR " + filename)
+    print(resp)
+    if not (resp.startswith("150") or resp.startswith("125")):
+        f.close()
+        dataSocket.close()
+        print("Failure")
+        return
+
+    total = 0
+    try:
+        while True:
+            chunk = f.read(4096)
+            if not chunk:
+                break
+            dataSocket.sendall(chunk)
+            total += len(chunk)
+    except Exception:
+        f.close()
+        dataSocket.close()
+        print("Failure")
+        return
+
+    f.close()
+    try:
+        dataSocket.shutdown(SHUT_WR)
+    except Exception:
+        pass
+    dataSocket.close()
+
+    final_resp = receiveData(clientSocket)
+    print(final_resp)
+
+    print("Success" if (fina
+    l_resp.startswith("226") or final_resp.startswith("250")) else "Failure")
+    print(f"Bytes transferred: {total}")
+
 
 
 # Milan
 def ftp_delete(clientSocket, filename):
-    pass
+    resp = sendCommand(clientSocket, "DELE " + filename)
+    print(resp)
+    print("Success" if resp.startswith("250") else "Failure")
 
 
 def main():
