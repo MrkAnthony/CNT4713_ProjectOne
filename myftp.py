@@ -35,7 +35,6 @@ def quitFTP(clientSocket) -> None:
 
 # Adrian
 def modePASV(clientSocket):
-
     # Send PASV
     response = sendCommand(clientSocket, "PASV")
     print(response)
@@ -101,11 +100,8 @@ def ftp_list(clientSocket):
         print("Failure")
 
 
-
-
 # Adrian
 def ftp_cd(clientSocket, directory):
-
     response = sendCommand(clientSocket, "CWD " + directory)
     print(response)
 
@@ -113,8 +109,6 @@ def ftp_cd(clientSocket, directory):
         print("Success")
     else:
         print("Failure")
-
-
 
 
 # Milan
@@ -151,7 +145,6 @@ def ftp_get(clientSocket, filename):
 
     print("Success" if (final_resp.startswith("226") or final_resp.startswith("250")) else "Failure")
     print(f"Bytes transferred: {total}")
-
 
 
 # Milan
@@ -200,10 +193,8 @@ def ftp_put(clientSocket, filename):
     final_resp = receiveData(clientSocket)
     print(final_resp)
 
-    print("Success" if (fina
-    l_resp.startswith("226") or final_resp.startswith("250")) else "Failure")
+    print("Success" if (final_resp.startswith("226") or final_resp.startswith("250")) else "Failure")
     print(f"Bytes transferred: {total}")
-
 
 
 # Milan
@@ -253,20 +244,48 @@ def main():
 
     # Command loop needs to be finished up
     # will only run if the login was successful with a status code of 230
-    '''
     if status == 230:
-        # It is your choice whether to use ACTIVE or PASV mode. In any event:
-        # COMPLETE
-        pasvStatus, dataSocket = modePASV(clientSocket)
-        if pasvStatus == 227:
-            # COMPLETE
-            pass
-    '''
+        while True:
+            user_input = input('myftp> ').strip()
+
+            if not user_input:
+                continue
+
+            parts = user_input.split(maxsplit=1)
+            command = parts[0].lower()
+            argument = parts[1] if len(parts) > 1 else ""
+
+            if command == 'cd':
+                if not argument:
+                    print("Usage: cd-remote-dir")
+                else:
+                    ftp_cd(clientSocket, argument)
+            elif command == "get":
+                if not argument:
+                    print("Usage: get remote-file")
+                else:
+                    ftp_get(clientSocket, argument)
+            elif command == "delete":
+                if not argument:
+                    print("Usage: delete remote-file")
+                else:
+                    ftp_delete(clientSocket, argument)
+            elif command == "ls":
+                ftp_list(clientSocket)
+            elif command == "put":
+                if not argument:
+                    print("Usage: put local-file")
+                else:
+                    ftp_put(clientSocket, argument)
+            elif command == "quit":
+                quitFTP(clientSocket)
+                break
+            else:
+                print(f"This command is Unknown: {command}")
+                print("Available commands: ls, cd, get, put, delete, quit")
 
     print("Disconnecting...")
     clientSocket.close()
-    # dataSocket.close()
     sys.exit()  # Terminate the program after sending the corresponding data
-
 
 main()
