@@ -8,14 +8,26 @@ DNS_PORT = 53
 
 
 def build_query(domain):
-    # TODO: Build DNS query packet (header + question section)
-    # Header: transaction ID, flags, QDCOUNT=1, others=0
-    # Question: encoded domain name + QTYPE A (1) + QCLASS IN (1)
-    pass
+    # The random transaction ID
+    transaction_id = random.randint(0, 65535)
+
+    flags = 0x000
+
+    # Header counts: 1 question, 0 answers, 0 authority, and 0 addtionals
+    header = struct.pack(">HHHHHH", transaction_id, flags, 1, 0, 0, 0)
+
+    # Encode the domain name
+    question = b""
+    for part in domain.split("."):
+        question += bytes([len(part)]) + part.encode()
+    question += b"\x00"
+
+    question += struct.pack(">HH", 1, 1)
+
+    return header + question
 
 
 def parse_response(data):
-    # TODO: Parse the binary DNS response
     # Return: (answers, authority, additional)
     # Each as a list of (name, type, value) tuples
     # Remember to handle DNS name compression (pointers)
@@ -84,7 +96,6 @@ def parse_response(data):
 
 
 def decode_name(data, offset):
-    # TODO: Decode a DNS name from the packet, handling pointer compression
     # Returns (name_string, new_offset)
     labels = []
     jumped = False
@@ -120,8 +131,12 @@ def decode_name(data, offset):
 
 
 def send_query(server_ip, packet):
-    # TODO: Create UDP socket, send packet to server_ip:53, return raw response
-    pass
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.settimeout(5)
+    sock.sendto(packet, (server_ip, DNS_PORT))
+    response, _ = sock.recvfrom(512)
+    sock.close()
+    return response
 
 
 def print_results(answers, authority, additional):
