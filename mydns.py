@@ -143,31 +143,59 @@ def print_results(answers, authority, additional):
     print(f"{len(answers)} Answers.")
     print(f"{len(authority)} Intermediate Name Servers.")
     print(f"{len(additional)} Additional Information Records.")
-    # TODO: Print each section in the format shown in the sample output
-    pass
+
+    print("Answers section:")
+    for name, rtype, value in answers:
+        print(f"Name : {name} IP : {value}")
+
+    print("Authority Section:")
+    for name, rtype, value in authority:
+        print(f"Name : {name} Name Server: {value}")
+
+    print("Additional Information Section:")
+    for name, rtype, value in additional:
+        print(f"Name : {name} IP : {value}")
 
 
 def resolve(domain, root_ip):
     current_server = root_ip
+    visited = set()
 
     while True:
         print("-" * 64)
         print(f"DNS server to query: {current_server}")
 
+        if current_server in visited:
+            print("Loop detected. Stopping.")
+            return
+        visited.add(current_server)
+
         packet = build_query(domain)
         response = send_query(current_server, packet)
+
         answers, authority, additional = parse_response(response)
 
         print("Reply received. Content overview:")
         print_results(answers, authority, additional)
 
-        # If we got an A record answer, we're done
         if answers:
-            print("Resolution complete.")
             return
 
-        # TODO: Pick one NS from authority, find its IP in additional, update current_server
-        # If no IP found in additional for the chosen NS, handle that edge case
+        next_server = None
+
+        for _, _, ns_name in authority:
+            for add_name, _, ip in additional:
+                if ns_name == add_name:
+                    next_server = ip
+                    break
+            if next_server:
+                break
+
+        if not next_server:
+            print("Could not find next DNS server IP.")
+            return
+
+        current_server = next_server
 
 
 if __name__ == "__main__":
