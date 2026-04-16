@@ -57,10 +57,16 @@ def encrypt_message(message: str, public_key) -> bytes:
         public_key: RSA public key object
     Returns:
         bytes: The encrypted ciphertext
-
     """
     encoded_string = message.encode()
-    return public_key.encrypt(encoded_string, padding)
+    return public_key.encrypt(
+        encoded_string,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
 
 
 def decrypt_message(ciphertext: bytes, private_key) -> str:
