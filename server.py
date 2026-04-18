@@ -3,7 +3,7 @@
 # Run with: python server.py
 
 import socket
-from crypto_utils import (
+from encrypted_chat import (
     generate_rsa_keypair,
     serialize_public_key,
     deserialize_public_key,
